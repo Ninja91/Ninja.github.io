@@ -48,19 +48,20 @@ Bun.serve({
             headers.delete("connection");
             headers.delete("origin");
             headers.delete("referer");
+            headers.delete("content-length"); // Let fetch recalculate this
 
             // Log presence of keys for debugging (Redacted)
             const tlKey = headers.get("X-TensorLake-API-Key") ? "PRESENT" : "MISSING";
             const gemKey = headers.get("X-Gemini-API-Key") ? "PRESENT" : "MISSING";
             const dbKey = headers.get("X-Database-URL") ? "PRESENT" : "MISSING";
-            console.log(`Forwarding Keys: TensorLake=${tlKey}, Gemini=${gemKey}, DB=${dbKey}`);
+            console.log(`[PROXY] ${req.method} ${targetUrl} | Keys: TL=${tlKey}, Gemini=${gemKey}, DB=${dbKey}`);
 
             try {
                 const response = await fetch(targetUrl, {
                     method: req.method,
                     headers: headers,
                     body: req.method === "POST" ? await req.arrayBuffer() : undefined,
-                    redirect: "follow",
+                    redirect: "manual", // Prevent automatic redirect following
                 });
 
                 const resHeaders = new Headers(response.headers);

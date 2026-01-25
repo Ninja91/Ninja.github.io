@@ -35,7 +35,12 @@ elements.saveSettings.addEventListener('click', () => {
     ];
 
     keys.forEach(({ id, el }) => {
-        const val = el.value.trim();
+        let val = el.value.trim();
+        // Strip surrounding quotes if present (common when copy-pasting from .env)
+        if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
+            val = val.substring(1, val.length - 1);
+        }
+
         if (val) {
             sessionStorage.setItem(id, val);
         } else {
@@ -205,9 +210,12 @@ async function sendQuery() {
 // --- Helper Functions ---
 
 async function runRemoteApp(appName, payload) {
+    const headers = getHeaders();
+    console.log(`[API] Calling ${appName} with keys: TL=${headers['X-TensorLake-API-Key'] ? '✓' : '✗'}, Gemini=${headers['X-Gemini-API-Key'] ? '✓' : '✗'}, DB=${headers['X-Database-URL'] ? '✓' : '✗'}`);
+
     const response = await fetch(`${getBaseUrl()}/applications/${appName}`, {
         method: 'POST',
-        headers: getHeaders(),
+        headers: headers,
         body: JSON.stringify(payload)
     });
 
