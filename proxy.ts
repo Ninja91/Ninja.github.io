@@ -23,7 +23,12 @@ Bun.serve({
             });
         }
 
-        if (url.pathname.startsWith("/api/proxy/")) {
+        // Health check / Root
+        if (url.pathname === "/") {
+            return new Response("Expense Explorer Proxy (Bun) is Running", { status: 200 });
+        }
+
+        if (url.pathname.startsWith("/api/proxy")) {
             const targetPath = url.pathname.replace("/api/proxy", "");
             const targetUrl = `${API_BASE}${targetPath}${url.search}`;
 
