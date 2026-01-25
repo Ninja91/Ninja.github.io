@@ -27,11 +27,16 @@ export function getHeaders() {
     if (geminiKey) headers['X-Gemini-API-Key'] = geminiKey;
     if (databaseUrl) headers['X-Database-URL'] = databaseUrl;
 
+    // Debugging (Redacted)
+    console.log(`[API] Headers Set: TL=${tensorlakeKey ? '✓' : '✗'}, Gemini=${geminiKey ? '✓' : '✗'}, DB=${databaseUrl ? '✓' : '✗'}`);
+
     return headers;
 }
 
 export async function runRemoteApp(appName: string, payload: any) {
     const headers = getHeaders();
+    console.log(`[API] Calling ${appName} at ${getBaseUrl()}`);
+
     const response = await fetch(`${getBaseUrl()}/applications/${appName}`, {
         method: 'POST',
         headers: headers,
@@ -39,7 +44,8 @@ export async function runRemoteApp(appName: string, payload: any) {
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errText = await response.text();
+        throw new Error(`API Error ${response.status}: ${errText}`);
     }
 
     return response.json();
@@ -48,6 +54,8 @@ export async function runRemoteApp(appName: string, payload: any) {
 export async function pollRequest(requestId: string) {
     const startTime = Date.now();
     const timeout = 120000; // 2 minutes
+
+    console.log(`[API] Polling request ${requestId}...`);
 
     while (Date.now() - startTime < timeout) {
         const response = await fetch(`${getBaseUrl()}/requests/${requestId}`, {
@@ -65,7 +73,7 @@ export async function pollRequest(requestId: string) {
             throw new Error(data.error || 'Request failed');
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
     throw new Error('Request timed out');
