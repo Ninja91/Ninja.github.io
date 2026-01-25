@@ -1,6 +1,8 @@
 const PORT = Number(process.env.PORT) || 8888;
 const API_BASE = "https://api.tensorlake.ai/v1/namespaces/default";
-const ALLOWED_ORIGIN = "https://ninja91.github.io";
+const ALLOWED_ORIGINS = ["https://ninja91.github.io", "https://nitinjain.me"];
+const isAllowed = (origin: string | null) =>
+    !origin || ALLOWED_ORIGINS.includes(origin) || origin.includes("localhost") || origin.includes("127.0.0.1");
 
 console.log(`Starting Bun Proxy Server at http://localhost:${PORT}`);
 console.log(`Proxying /api/proxy/* to ${API_BASE}/*`);
@@ -15,7 +17,7 @@ Bun.serve({
             const origin = req.headers.get("Origin");
             return new Response(null, {
                 headers: {
-                    "Access-Control-Allow-Origin": (origin === ALLOWED_ORIGIN || origin?.includes("localhost") || origin?.includes("127.0.0.1")) ? origin : ALLOWED_ORIGIN,
+                    "Access-Control-Allow-Origin": isAllowed(origin) ? (origin || "*") : ALLOWED_ORIGINS[0],
                     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type, X-TensorLake-API-Key, X-Gemini-API-Key, X-Database-URL, Authorization",
                     "Access-Control-Max-Age": "86400",
@@ -68,7 +70,7 @@ Bun.serve({
 
                 // Setup CORS for the client
                 const origin = req.headers.get("Origin");
-                resHeaders.set("Access-Control-Allow-Origin", (origin === ALLOWED_ORIGIN || origin?.includes("localhost") || origin?.includes("127.0.0.1")) ? origin : ALLOWED_ORIGIN);
+                resHeaders.set("Access-Control-Allow-Origin", isAllowed(origin) ? (origin || "*") : ALLOWED_ORIGINS[0]);
                 resHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
                 resHeaders.set("Access-Control-Allow-Headers", "Content-Type, X-TensorLake-API-Key, X-Gemini-API-Key, X-Database-URL, Authorization");
 
