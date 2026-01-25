@@ -1,6 +1,6 @@
 const CONFIG = {
     directBaseUrl: "https://api.tensorlake.ai/v1/namespaces/default",
-    proxyBaseUrl: "https://YOUR-RENDER-PROXY-URL.onrender.com/api/proxy", // Replace after deployment
+    proxyBaseUrl: "https://expense-explorer-proxy.onrender.com/api/proxy",
     localProxyUrl: "http://localhost:8888/api/proxy"
 };
 
