@@ -1,0 +1,8 @@
+{
+  "name": "ninja-proxy",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "bun run proxy.ts"
+  },
+  "dependencies": {}
+}
