@@ -25,8 +25,25 @@ function App() {
     // Initial load check
     const checkProxy = async () => {
       try {
-        await fetch('http://localhost:8888/');
-        console.log("[PROXY] Local proxy detected at port 8888");
+        const resp = await fetch('http://localhost:8888/');
+        if (resp.ok) console.log("[PROXY] Local proxy detected at port 8888");
+
+        // Try to fetch local config if keys are missing
+        if (!sessionStorage.getItem('TENSORLAKE_API_KEY')) {
+          const configResp = await fetch('http://localhost:8888/api/config');
+          if (configResp.ok) {
+            const config = await configResp.json();
+            if (config.TENSORLAKE_API_KEY) sessionStorage.setItem('TENSORLAKE_API_KEY', config.TENSORLAKE_API_KEY);
+            if (config.GEMINI_API_KEY) sessionStorage.setItem('GEMINI_API_KEY', config.GEMINI_API_KEY);
+            if (config.DATABASE_URL) sessionStorage.setItem('DATABASE_URL', config.DATABASE_URL);
+
+            if (config.TENSORLAKE_API_KEY) {
+              console.log("[PROXY] Pre-filled keys from local .env");
+              setHasKeys(true);
+              refreshInsights(false);
+            }
+          }
+        }
       } catch (e) { }
     };
     checkProxy();
