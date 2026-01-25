@@ -35,9 +35,10 @@ export function getHeaders() {
 
 export async function runRemoteApp(appName: string, payload: any) {
     const headers = getHeaders();
-    console.log(`[API] Calling ${appName} at ${getBaseUrl()}`);
+    const url = `${getBaseUrl()}/applications/${appName}`;
+    console.log(`[API] Calling ${appName} at ${url}`);
 
-    const response = await fetch(`${getBaseUrl()}/applications/${appName}`, {
+    const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload)
@@ -51,26 +52,33 @@ export async function runRemoteApp(appName: string, payload: any) {
     return response.json();
 }
 
-export async function pollRequest(requestId: string) {
+export async function pollRequest(requestId: string, appName: string) {
     const startTime = Date.now();
     const timeout = 120000; // 2 minutes
+    const url = `${getBaseUrl()}/applications/${appName}/requests/${requestId}`;
 
-    console.log(`[API] Polling request ${requestId}...`);
+    console.log(`[API] Polling ${appName} request ${requestId} at ${url}...`);
 
     while (Date.now() - startTime < timeout) {
-        const response = await fetch(`${getBaseUrl()}/requests/${requestId}`, {
+        const response = await fetch(url, {
             headers: getHeaders()
         });
 
         if (!response.ok) {
-            throw new Error(`Poll Error: ${response.status}`);
+            throw new Error(`Poll Error: ${response.status} at ${url}`);
         }
 
         const data = await response.json();
-        if (data.status === 'completed') {
-            return data.output;
-        } else if (data.status === 'failed') {
-            throw new Error(data.error || 'Request failed');
+
+        // TensorLake returns function_runs which contain status
+        // We look at the first run (the app itself)
+        const mainRun = data.function_runs?.[0];
+        const status = mainRun?.status || data.status; // Fallback to root status
+
+        if (status === 'completed') {
+            return data.output || mainRun?.output;
+        } else if (status === 'failed') {
+            throw new Error(data.failure_reason || mainRun?.failure_reason || 'Request failed');
         }
 
         await new Promise(resolve => setTimeout(resolve, 3000));

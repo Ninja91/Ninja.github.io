@@ -22,6 +22,15 @@ function App() {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
 
+    // Initial load check
+    const checkProxy = async () => {
+      try {
+        await fetch('http://localhost:8888/');
+        console.log("[PROXY] Local proxy detected at port 8888");
+      } catch (e) { }
+    };
+    checkProxy();
+
     if (hasKeys) {
       refreshInsights(false);
     } else if (messages.length === 0) {
@@ -35,7 +44,7 @@ function App() {
     setIsLoading(true);
     try {
       const { request_id } = await runRemoteApp('insights_app', { force_refresh: force });
-      const data = await pollRequest(request_id);
+      const data = await pollRequest(request_id, 'insights_app');
       setInsights(data);
     } catch (error) {
       console.error(error);
@@ -53,11 +62,11 @@ function App() {
         content_type: contentType,
         filename: filename
       });
-      await pollRequest(request_id);
-      setMessages(prev => [...prev, { role: 'agent', text: `Successfully ingested ${filename}! refreshing insights...` }]);
+      await pollRequest(request_id, 'expense_ingestion_app');
+      setMessages(prev => [...prev, { role: 'agent', text: `Successfully ingested ${filename}! Refreshing insights...` }]);
       await refreshInsights(true);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'agent', text: "Upload failed. Please ensure your Database URL and Gemini key are correct in Settings." }]);
+      setMessages(prev => [...prev, { role: 'agent', text: `Ingestion failed: ${error instanceof Error ? error.message : "Internal Error"}. Check Settings.` }]);
     } finally {
       setIsLoading(false);
     }
@@ -92,13 +101,19 @@ function App() {
     setIsLoading(true);
     try {
       const { request_id } = await runRemoteApp('query_app', { user_query: text });
-      const answer = await pollRequest(request_id);
+      const answer = await pollRequest(request_id, 'query_app');
       setMessages(prev => [...prev, { role: 'agent', text: answer }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'agent', text: "I'm having trouble connecting. Please verify your keys in Settings." }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSaveSettings = () => {
+    setHasKeys(true);
+    setActiveTab('dashboard');
+    refreshInsights(false);
   };
 
   return (
@@ -144,7 +159,7 @@ function App() {
                 <Chat messages={messages} onSendMessage={handleSendMessage} isLoading={isLoading} />
               </TabsContent>
               <TabsContent value="settings" activeValue={activeTab} className="m-0 fade-up">
-                <Settings onSave={() => setHasKeys(true)} />
+                <Settings onSave={handleSaveSettings} />
               </TabsContent>
             </div>
 
@@ -172,14 +187,12 @@ function App() {
         ) : (
           /* Desktop App Layout */
           <div className="h-[calc(100vh-72px)] flex p-8 gap-8">
-            {/* Sidebar-style Chat */}
             <div className="w-[400px] flex flex-col gap-6 fade-up">
               <div className="h-full flex flex-col apple-card overflow-hidden">
                 <Chat messages={messages} onSendMessage={handleSendMessage} isLoading={isLoading} />
               </div>
             </div>
 
-            {/* Dynamic Content Area */}
             <div className="flex-1 flex flex-col gap-6 fade-up" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -198,11 +211,7 @@ function App() {
 
               <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
                 {activeTab === 'settings' ? (
-                  <Settings onSave={() => {
-                    setHasKeys(true);
-                    setActiveTab('dashboard');
-                    refreshInsights(false);
-                  }} />
+                  <Settings onSave={handleSaveSettings} />
                 ) : (
                   <div className="space-y-8 pb-12">
                     <FileUpload onUpload={handleFileUpload} isLoading={isLoading} />
