@@ -74,10 +74,6 @@ if (savedProxy !== null) {
 }
 
 function getBaseUrl() {
-    return elements.useProxyCheckbox.checked ? CONFIG.proxyBaseUrl : CONFIG.directBaseUrl;
-}
-
-function getBaseUrl() {
     const tensorlakeKey = sessionStorage.getItem('TENSORLAKE_API_KEY');
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 

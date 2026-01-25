@@ -42,11 +42,18 @@ Bun.serve({
                 headers.set("Authorization", `Bearer ${tensorlakeKey}`);
             }
 
-            // Cleanup headers for the upsteam request
+            // Cleanup headers for the upstream request
+            // We keep Content-Type, Accept, and all X- headers
             headers.delete("host");
             headers.delete("connection");
             headers.delete("origin");
             headers.delete("referer");
+
+            // Log presence of keys for debugging (Redacted)
+            const tlKey = headers.get("X-TensorLake-API-Key") ? "PRESENT" : "MISSING";
+            const gemKey = headers.get("X-Gemini-API-Key") ? "PRESENT" : "MISSING";
+            const dbKey = headers.get("X-Database-URL") ? "PRESENT" : "MISSING";
+            console.log(`Forwarding Keys: TensorLake=${tlKey}, Gemini=${gemKey}, DB=${dbKey}`);
 
             try {
                 const response = await fetch(targetUrl, {
