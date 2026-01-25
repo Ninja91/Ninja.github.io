@@ -10,18 +10,18 @@ The `proxy.ts` file should be in the root of your `Ninja.github.io` repository.
 2.  Click **"New +"** and select **"Web Service"**.
 3.  Connect your `Ninja.github.io` repository.
 4.  Configure the service:
-    - **Name**: `expense-explorer-proxy`
+    - **Name**: `expense-explorer-proxy-bun`
     - **Runtime**: `Bun` (Select Bun from the runtime dropdown)
     - **Build Command**: `bun install` (even if you have no dependencies)
     - **Start Command**: `bun run proxy.ts`
-5.  Render will give you a URL like `https://expense-explorer-proxy.onrender.com`.
+5.  Render will give you a URL like `https://expense-explorer-proxy-bun.onrender.com`.
 
 ## Step 3: Update the Frontend
 Update the `proxyBaseUrl` in your `app.js` with your Render URL (this should already be done if you provided the URL earlier):
 
 ```javascript
 const CONFIG = {
-    proxyBaseUrl: "https://expense-explorer-proxy.onrender.com/api/proxy"
+    proxyBaseUrl: "https://expense-explorer-proxy-bun.onrender.com/api/proxy"
 };
 ```
 
