@@ -6,9 +6,9 @@ import urllib.error
 import sys
 
 # Configuration
-PORT = 8888
+PORT = int(os.environ.get("PORT", 8888))
 API_BASE = "https://api.tensorlake.ai/v1/namespaces/default"
-# API_KEY is managed via request headers from the frontend settings tab
+ALLOWED_ORIGIN = "https://ninja91.github.io" # Explicit origin for security
 
 
 class DevProxyHandler(http.server.SimpleHTTPRequestHandler):
@@ -61,7 +61,16 @@ class DevProxyHandler(http.server.SimpleHTTPRequestHandler):
                 for k, v in response.getheaders():
                     if k.lower() not in ['transfer-encoding', 'connection', 'keep-alive', 'content-encoding']:
                         self.send_header(k, v)
-                self.send_header("Access-Control-Allow-Origin", "*")
+                
+                # Allow both local and production origin
+                origin = self.headers.get('Origin')
+                if origin in [ALLOWED_ORIGIN, "http://localhost:8888", "http://127.0.0.1:8888"]:
+                    self.send_header("Access-Control-Allow-Origin", origin)
+                else:
+                    self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
+                
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type, X-TensorLake-API-Key, X-Gemini-API-Key, X-Database-URL, Authorization")
                 self.end_headers()
                 self.wfile.write(response.read())
 
@@ -74,12 +83,21 @@ class DevProxyHandler(http.server.SimpleHTTPRequestHandler):
             print(f"Proxy Error: {e}")
             self.send_error(500, str(e))
 
-print(f"Starting Dev Proxy Server at http://localhost:{PORT}")
-print(f"Serving files from {os.getcwd()}")
-print(f"Proxying /api/proxy/* to {API_BASE}/*")
+    def do_OPTIONS(self):
+        # Handle Preflight requests
+        self.send_response(200)
+        origin = self.headers.get('Origin')
+        if origin in [ALLOWED_ORIGIN, "http://localhost:8888", "http://127.0.0.1:8888"]:
+            self.send_header("Access-Control-Allow-Origin", origin)
+        else:
+            self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-TensorLake-API-Key, X-Gemini-API-Key, X-Database-URL, Authorization")
+        self.end_headers()
 
 socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), DevProxyHandler) as httpd:
+    print(f"Starting Proxy Server at http://localhost:{PORT}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

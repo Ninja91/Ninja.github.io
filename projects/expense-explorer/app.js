@@ -1,6 +1,7 @@
 const CONFIG = {
     directBaseUrl: "https://api.tensorlake.ai/v1/namespaces/default",
-    proxyBaseUrl: "/api/proxy"
+    proxyBaseUrl: "https://YOUR-RENDER-PROXY-URL.onrender.com/api/proxy", // Replace after deployment
+    localProxyUrl: "http://localhost:8888/api/proxy"
 };
 
 const elements = {
@@ -17,6 +18,7 @@ const elements = {
     databaseUrlInput: document.getElementById('database-url-input'),
     useProxyCheckbox: document.getElementById('use-proxy-checkbox'),
     saveSettings: document.getElementById('save-settings'),
+    loadDemo: document.getElementById('load-demo-btn'),
 };
 
 // --- Settings Logic ---
@@ -73,6 +75,16 @@ if (savedProxy !== null) {
 
 function getBaseUrl() {
     return elements.useProxyCheckbox.checked ? CONFIG.proxyBaseUrl : CONFIG.directBaseUrl;
+}
+
+function getBaseUrl() {
+    const tensorlakeKey = sessionStorage.getItem('TENSORLAKE_API_KEY');
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    // If we have a key, we might try direct or proxy.
+    // For GitHub Pages, proxy is usually required for CORS.
+    if (isLocal) return CONFIG.localProxyUrl;
+    return CONFIG.proxyBaseUrl;
 }
 
 function getHeaders() {
@@ -520,3 +532,28 @@ if (insightsElements.refreshBtn) {
 
 // Load insights on page load (delayed to not block initial render)
 setTimeout(() => loadInsights(false), 1000);
+// --- Demo Mode Logic ---
+if (elements.loadDemo) {
+    elements.loadDemo.addEventListener('click', () => {
+        const sampleInsights = {
+            category_summary: { "Food": 450.20, "Rent": 1200.00, "Subscriptions": 89.90, "Travel": 320.15 },
+            subscriptions: [
+                { description: "Netflix", amount: 15.99, provider: "Visa", occurrences: 12 },
+                { description: "SaaS Tool", amount: 29.00, provider: "Amex", occurrences: 6 }
+            ],
+            anomalies: [
+                { description: "High Spending in Food", amount: 150.00, date: "2025-01-20", merchant: "Fancy Restaurant", severity: "medium" }
+            ],
+            trends: {
+                monthly: [
+                    { month: "2024-10", amount: 2100 },
+                    { month: "2024-11", amount: 1950 },
+                    { month: "2024-12", amount: 2400 },
+                    { month: "2025-01", amount: 1800 }
+                ]
+            }
+        };
+        renderInsights(sampleInsights);
+        addChatMessage('agent', "Demo mode activated. I've loaded some sample financial data for you to explore.");
+    });
+}

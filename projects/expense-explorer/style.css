@@ -71,6 +71,27 @@ body {
     font-weight: 400;
 }
 
+.header-actions {
+    margin-top: 12px;
+}
+
+.demo-button {
+    background: #E8F2FF;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.demo-button:hover {
+    background: var(--accent);
+    color: white;
+}
+
 /* Settings Area */
 .settings-container {
     background: #FAFAFA;
