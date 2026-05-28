@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Road to 12 Million &mdash; Bangalore Vehicles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a08;--surface:#0f0f0c;--text:#e8e0cc;--muted:#54504a;--accent:#e8522a;--gold:#c4956a;--blue:#4a8fd4}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Source Serif 4',Georgia,serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 64px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 70% 50%,rgba(232,82,42,.04),transparent);pointer-events:none}
+.hero-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:36px;display:flex;align-items:center;gap:12px}
+.hero-tag::before{content:'';width:28px;height:1px;background:var(--accent);display:block}
+h1{font-family:'Playfair Display',serif;font-size:clamp(52px,8vw,104px);font-weight:900;line-height:.93;letter-spacing:-3px;max-width:820px;margin-bottom:40px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:18px;color:var(--muted);max-width:460px;line-height:1.7;margin-bottom:72px;font-weight:300}
+.hero-stats{display:flex;border-top:1px solid rgba(255,255,255,.06)}
+.stat{padding:22px 44px 22px 0;border-right:1px solid rgba(255,255,255,.06);margin-right:44px}
+.stat:last-child{border-right:none;margin-right:0}
+.stat-n{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;display:block;line-height:1.1}
+.stat-l{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:4px;display:block}
+.scroll-hint{position:absolute;bottom:44px;left:64px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:14px}
+.scroll-hint::after{content:'';width:2px;height:36px;background:linear-gradient(to bottom,var(--muted),transparent);display:block;animation:breathe 2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.25}50%{opacity:.85}}
+
+/* SCROLLYTELLING */
+.scrolly{display:flex;align-items:flex-start}
+.chart-panel{position:sticky;top:0;height:100vh;width:57%;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:40px 36px 40px 60px;background:var(--surface)}
+.chart-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.chart-svg-wrap{flex:1;min-height:0;max-height:460px;position:relative}
+.chart-svg-wrap svg{display:block;width:100%;height:100%}
+.chart-legend{display:flex;gap:20px;margin-top:14px}
+.leg{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:7px;transition:opacity .5s}
+.leg-swatch{width:22px;height:3px;border-radius:2px;flex-shrink:0}
+.chart-foot{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#2e2b27;margin-top:10px;line-height:1.6;min-height:2em}
+
+/* NARRATIVE */
+.narrative{width:43%;padding:0 48px 0 36px}
+.step{min-height:88vh;display:flex;flex-direction:column;justify-content:center;padding:60px 0;opacity:.12;transition:opacity .6s}
+.step.active{opacity:1}
+.step-num{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:16px}
+h2{font-family:'Playfair Display',serif;font-size:clamp(23px,2.5vw,33px);font-weight:700;line-height:1.15;margin-bottom:20px}
+h2 em{font-style:italic;color:var(--gold)}
+.body{font-size:15px;color:#8a7e72;line-height:1.9;font-weight:300}
+.body p+p{margin-top:13px}
+.big-n{font-family:'Playfair Display',serif;font-size:56px;font-weight:900;color:var(--accent);line-height:1;margin:18px 0 5px;display:block}
+.big-l{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:18px;display:block}
+.callout{border-left:2px solid var(--gold);padding:12px 16px;margin:20px 0;background:rgba(196,149,106,.05)}
+.callout p{font-size:14px;color:#a09070;line-height:1.75;margin:0}
+
+/* OUTRO */
+.outro{background:var(--accent);padding:100px 64px;position:relative;overflow:hidden}
+.outro::before{content:'12M';position:absolute;right:-10px;top:-20px;font-family:'Playfair Display',serif;font-size:280px;font-weight:900;color:rgba(0,0,0,.11);line-height:1;pointer-events:none;user-select:none}
+.outro h2{font-family:'Playfair Display',serif;font-size:clamp(40px,5.5vw,72px);font-weight:900;color:#fff;line-height:1.05;max-width:680px;margin-bottom:32px;position:relative}
+.outro-body{font-size:18px;color:rgba(255,255,255,.78);max-width:560px;line-height:1.75;font-weight:300;position:relative}
+.outro-body p+p{margin-top:16px}
+.outro-src{margin-top:56px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.33);letter-spacing:.5px;border-top:1px solid rgba(255,255,255,.14);padding-top:22px;line-height:1.9;position:relative}
+
+@media(max-width:760px){
+  /* hero */
+  .hero{padding:48px 22px 56px}
+  h1{font-size:42px;letter-spacing:-2px}
+  .hero-sub{font-size:16px;margin-bottom:44px}
+  .hero-stats{flex-direction:column}
+  .stat{padding:12px 0;border-right:none;margin-right:0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .stat-n{font-size:30px}
+  .scroll-hint{display:none}
+
+  /* scrollytelling: column stack, chart sticky at top */
+  .scrolly{flex-direction:column}
+
+  /* chart stays STICKY at top — critical for mobile scrollytelling */
+  .chart-panel{
+    position:sticky;top:0;
+    width:100%;height:46vh;min-height:220px;
+    padding:10px 18px 8px;
+    z-index:10;
+    flex-direction:column
+  }
+  .chart-eyebrow{font-size:9px;margin-bottom:6px}
+  .chart-svg-wrap{max-height:none;flex:1}
+  .chart-legend{margin-top:6px;gap:14px}
+  .leg{font-size:10px}
+  .chart-foot{font-size:9px;margin-top:4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* narrative sits below sticky chart, full width */
+  .narrative{width:100%;padding:0}
+
+  /* each step tall enough to require deliberate scrolling */
+  .step{min-height:90vh;padding:36px 22px}
+  .big-n{font-size:46px}
+  .callout{margin:16px 0}
+
+  /* outro */
+  .outro{padding:64px 22px}
+  .outro::before{font-size:180px}
+}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-tag">Bangalore &middot; 2002&ndash;2025 &middot; A data story</div>
+  <h1>The Road to<br><em>12 Million</em></h1>
+  <p class="hero-sub">How Bangalore accumulated more registered vehicles than the population of Greece &mdash; and why the number keeps climbing.</p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-n">12.3M</span><span class="stat-l">Vehicles, 2025</span></div>
+    <div class="stat"><span class="stat-n">~2,000</span><span class="stat-l">Added every day</span></div>
+    <div class="stat"><span class="stat-n">9.5%</span><span class="stat-l">Annual growth rate</span></div>
+    <div class="stat"><span class="stat-n">23 yrs</span><span class="stat-l">To reach here</span></div>
+  </div>
+  <div class="scroll-hint">Scroll to explore</div>
+</section>
+
+<div class="scrolly">
+  <div class="chart-panel">
+    <div class="chart-eyebrow">Registered vehicles &middot; Bangalore</div>
+    <div class="chart-svg-wrap">
+      <svg id="chart-svg" role="img" aria-label="D3 animated chart of registered vehicles in Bangalore 2002-2025"></svg>
+    </div>
+    <div class="chart-legend">
+      <div class="leg" id="leg2w"><div class="leg-swatch" style="background:#4a8fd4"></div>Two-wheelers</div>
+      <div class="leg" id="leg4w"><div class="leg-swatch" style="background:#e8522a"></div>Cars &amp; others</div>
+    </div>
+    <div class="chart-foot" id="foot">Sources: MoRTH &middot; CEIC &middot; Karnataka Transport Dept &middot; OpenCity</div>
+  </div>
+
+  <div class="narrative">
+    <div class="step active" data-step="0">
+      <div class="step-num">01 &mdash; The beginning</div>
+      <h2>It started quietly, in 2002</h2>
+      <div class="body">
+        <p>In 2002, Bangalore had <strong style="color:#e8e0cc">1.68 million registered vehicles</strong>. The IT boom was underway. The roads were busy but not broken.</p>
+        <span class="big-n">1.68M</span>
+        <span class="big-l">Vehicles in 2002</span>
+        <p>That number would never stop climbing. Not once, not even during a pandemic.</p>
+      </div>
+    </div>
+
+    <div class="step" data-step="1">
+      <div class="step-num">02 &mdash; The growth machine</div>
+      <h2>The city grew.<br><em>So did the traffic.</em></h2>
+      <div class="body">
+        <p>Through the 2000s and 2010s, Bangalore's tech economy exploded. Salaries rose, aspirations rose, and vehicle ownership became affordable for millions.</p>
+        <div class="callout"><p>For 23 straight years, Bangalore has added vehicles at nearly <strong style="color:#c4956a">10% annually</strong> &mdash; one of the highest sustained rates for any major city globally.</p></div>
+        <p>The line does not flatten. It does not slow. It just goes up.</p>
+      </div>
+    </div>
+
+    <div class="step" data-step="2">
+      <div class="step-num">03 &mdash; The two-wheeler nation</div>
+      <h2>67% of Bangalore rides on <em>two wheels</em></h2>
+      <div class="body">
+        <p>In 2002 it was 74%. Today it is 67%. The ratio has barely moved in over two decades.</p>
+        <p>For every three cars you see, there are seven motorcycles or scooters. They are cheaper, faster in traffic, and in a city with poor last-mile transit &mdash; the only rational option.</p>
+        <span class="big-n">8.2M</span>
+        <span class="big-l">Two-wheelers today</span>
+      </div>
+    </div>
+
+    <div class="step" data-step="3">
+      <div class="step-num">04 &mdash; The surge</div>
+      <h2>Between 2015 and 2020,<br><em>something broke</em></h2>
+      <div class="body">
+        <p>From 2015 to 2020, Bengaluru added <strong style="color:#e8e0cc">3.8 million vehicles</strong> &mdash; more than most Indian cities have total.</p>
+        <div class="callout"><p>Metro construction tore up arterial roads. BMTC ridership fell from 51 lakh to 45 lakh daily trips. 1,243 new two-wheelers were registered every single day.</p></div>
+        <p>The city was not building alternatives fast enough, so it built vehicles instead.</p>
+      </div>
+    </div>
+
+    <div class="step" data-step="4">
+      <div class="step-num">05 &mdash; The car problem</div>
+      <h2>Cars: fewer in count,<br><em>heavier on roads</em></h2>
+      <div class="body">
+        <p>Cars are just 20% of Bengaluru's vehicles &mdash; but a car takes <strong style="color:#e8e0cc">7x the road space</strong> of a two-wheeler.</p>
+        <span class="big-n">25.37L</span>
+        <span class="big-l">Cars in Bengaluru, 2025</span>
+        <p>More than half of all Karnataka's cars are in Bengaluru alone. Car growth is slowing (5% in 2024-25, down from 7%) but the base is now enormous.</p>
+      </div>
+    </div>
+
+    <div class="step" data-step="5">
+      <div class="step-num">06 &mdash; Today</div>
+      <h2>12.3 million vehicles.<br><em>One city.</em></h2>
+      <div class="body">
+        <p>Every month, Bengaluru adds 60,000+ vehicles. October alone saw 76,509 registrations in 2024 on festive demand.</p>
+        <span class="big-n">~2,000</span>
+        <span class="big-l">New vehicles per day in 2025</span>
+        <div class="callout"><p>The metro covers 73 km. The city spans 741 km&sup2;. Suburban rail is delayed. The math keeps getting worse &mdash; and the vehicles keep coming.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="outro">
+  <h2>There is no finish line</h2>
+  <div class="outro-body">
+    <p>Bengaluru's vehicle count is projected to exceed 15 million before 2030. Metro Phase 3 is years away. Suburban Rail remains mostly on paper. And every morning, 8 million two-wheelers weave through a city never designed to hold them.</p>
+    <p>The road to 12 million took 23 years. The road to 15 million will take far fewer.</p>
+  </div>
+  <div class="outro-src">
+    Data: Ministry of Road Transport &amp; Highways &middot; CEIC &middot; Karnataka Transport Department &middot; OpenCity.in &middot; Deccan Herald<br>
+    Confirmed anchors: 2002, 2010, 2015, 2016, 2018, 2019, 2020, 2021, 2023, 2025 &mdash; intermediate years interpolated.<br>
+    Fiscal year-end values for 2021 onwards. "Cars &amp; others" = private cars + commercial + autos + buses.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function () {
+  /* ── DATA ── */
+  var YEARS_NUM = [2002,2003,2004,2005,2006,2007,2008,2009,2010,
+                   2011,2012,2013,2014,2015,2016,2017,2018,2019,
+                   2020,2021,2022,2023,2024,2025];
+
+  var TW = [1.25,1.37,1.49,1.62,1.78,1.95,2.12,2.26,2.41,
+            2.75,3.10,3.42,3.62,3.80,4.89,5.10,5.59,5.59,
+            6.42,6.70,6.95,7.30,7.78,8.21];
+
+  var FW = [0.43,0.48,0.56,0.66,0.77,0.87,1.00,1.12,1.21,
+            1.30,1.45,1.63,1.93,2.30,1.81,2.10,2.03,2.46,
+            3.22,3.30,3.45,3.60,3.82,4.09];
+
+  var CONFIRMED = {2002:1,2010:1,2015:1,2016:1,2018:1,2019:1,2020:1,2021:1,2023:1,2025:1};
+
+  var twData = YEARS_NUM.map(function(y,i){ return {yr:y, val:TW[i]}; });
+  var fwData = YEARS_NUM.map(function(y,i){ return {yr:y, val:FW[i]}; });
+
+  /* ── DIMENSIONS — responsive ── */
+  var isMobile = window.innerWidth <= 760;
+  var W = 680, H = isMobile ? 340 : 400;
+  var m = isMobile
+    ? {t:16, r:14, b:36, l:42}
+    : {t:28, r:20, b:46, l:52};
+  var cW = W - m.l - m.r;
+  var cH = H - m.t - m.b;
+
+  /* ── SVG ── */
+  var svg = d3.select('#chart-svg')
+    .attr('viewBox', '0 0 ' + W + ' ' + H)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+
+  /* ── DEFS ── */
+  var defs = svg.append('defs');
+
+  function makeGrad(id, hex, a1, a2) {
+    var g = defs.append('linearGradient')
+      .attr('id', id).attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',1);
+    g.append('stop').attr('offset','0%').attr('stop-color', hex).attr('stop-opacity', a1);
+    g.append('stop').attr('offset','100%').attr('stop-color', hex).attr('stop-opacity', a2);
+  }
+  makeGrad('twGrad', '#4a8fd4', 0.32, 0.02);
+  makeGrad('fwGrad', '#e8522a', 0.26, 0.02);
+  makeGrad('twGradFade', '#4a8fd4', 0.06, 0.01);
+  makeGrad('fwGradFade', '#e8522a', 0.06, 0.01);
+
+  /* clip rect for animated reveal */
+  var clipRect = defs.append('clipPath').attr('id','revealClip')
+    .append('rect').attr('x',-4).attr('y',-10)
+    .attr('width',0).attr('height',cH+20);
+
+  /* ── SCALES ── */
+  var xSc = d3.scaleLinear().domain([2002,2025]).range([0, cW]);
+  var ySc = d3.scaleLinear().domain([0, 14]).range([cH, 0]);
+
+  /* ── GENERATORS ── */
+  var areaGen = d3.area()
+    .x(function(d){ return xSc(d.yr); })
+    .y0(cH).y1(function(d){ return ySc(d.val); })
+    .curve(d3.curveMonotoneX);
+
+  var lineGen = d3.line()
+    .x(function(d){ return xSc(d.yr); })
+    .y(function(d){ return ySc(d.val); })
+    .curve(d3.curveMonotoneX);
+
+  /* ── MAIN GROUP ── */
+  var g = svg.append('g').attr('transform','translate('+m.l+','+m.t+')');
+
+  /* grid */
+  var gridVals = [2,4,6,8,10,12,14];
+  g.append('g').attr('class','grid')
+    .selectAll('line').data(gridVals).enter().append('line')
+    .attr('x1',0).attr('x2',cW)
+    .attr('y1',function(d){ return ySc(d); })
+    .attr('y2',function(d){ return ySc(d); })
+    .attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',1);
+
+  /* axes */
+  var xAxis = d3.axisBottom(xSc)
+    .tickValues(isMobile
+      ? [2002,2008,2014,2019,2025]
+      : [2002,2006,2010,2014,2016,2019,2022,2025])
+    .tickFormat(d3.format('d')).tickSize(4);
+
+  var yAxis = d3.axisLeft(ySc)
+    .tickValues(isMobile ? [0,4,8,12] : [0,2,4,6,8,10,12,14])
+    .tickFormat(function(d){ return d === 0 ? '0' : d+'M'; })
+    .tickSize(0);
+
+  var axFontSize = isMobile ? 9 : 10;
+
+  var xAxisG = g.append('g').attr('class','x-axis').attr('transform','translate(0,'+cH+')').call(xAxis);
+  xAxisG.select('.domain').attr('stroke','rgba(255,255,255,0.07)');
+  xAxisG.selectAll('.tick line').attr('stroke','rgba(255,255,255,0.07)');
+  xAxisG.selectAll('.tick text')
+    .attr('fill','#40393280').attr('font-family','IBM Plex Mono,monospace')
+    .attr('font-size', axFontSize).attr('dy','1.4em');
+
+  var yAxisG = g.append('g').attr('class','y-axis').call(yAxis);
+  yAxisG.select('.domain').remove();
+  yAxisG.selectAll('.tick text')
+    .attr('fill','#40393280').attr('font-family','IBM Plex Mono,monospace')
+    .attr('font-size', axFontSize).attr('dx','-0.4em');
+
+  /* ── SURGE OVERLAY ── */
+  var surgeG = g.append('g').attr('class','surge').attr('opacity',0);
+  surgeG.append('rect')
+    .attr('x', xSc(2015)).attr('y',0)
+    .attr('width', xSc(2020)-xSc(2015)).attr('height',cH)
+    .attr('fill','rgba(196,149,106,0.08)');
+  [2015,2020].forEach(function(yr){
+    surgeG.append('line')
+      .attr('x1',xSc(yr)).attr('x2',xSc(yr))
+      .attr('y1',0).attr('y2',cH)
+      .attr('stroke','rgba(196,149,106,0.32)').attr('stroke-width',1)
+      .attr('stroke-dasharray','3,3');
+  });
+  surgeG.append('text').attr('x',xSc(2015)+5).attr('y',12)
+    .attr('fill','rgba(196,149,106,0.7)').attr('font-size',9)
+    .attr('font-family','IBM Plex Mono,monospace').text('2015');
+  surgeG.append('text').attr('x',xSc(2020)-29).attr('y',12)
+    .attr('fill','rgba(196,149,106,0.7)').attr('font-size',9)
+    .attr('font-family','IBM Plex Mono,monospace').text('2020');
+  /* surge growth label */
+  var midX = (xSc(2015) + xSc(2020)) / 2;
+  surgeG.append('text').attr('x', midX).attr('y', cH - 12)
+    .attr('text-anchor','middle').attr('fill','rgba(196,149,106,0.5)')
+    .attr('font-size',9).attr('font-family','IBM Plex Mono,monospace')
+    .text('+3.8M vehicles');
+
+  /* ── AREAS + LINES under clip ── */
+  var clipG = g.append('g').attr('clip-path','url(#revealClip)');
+
+  var twAreaPath = clipG.append('path').datum(twData)
+    .attr('d', areaGen).attr('fill','url(#twGrad)').attr('opacity',0);
+  var fwAreaPath = clipG.append('path').datum(fwData)
+    .attr('d', areaGen).attr('fill','url(#fwGrad)').attr('opacity',0);
+  var twLinePath = clipG.append('path').datum(twData)
+    .attr('d', lineGen).attr('fill','none')
+    .attr('stroke','#4a8fd4').attr('stroke-width',2.5).attr('opacity',0);
+  var fwLinePath = clipG.append('path').datum(fwData)
+    .attr('d', lineGen).attr('fill','none')
+    .attr('stroke','#e8522a').attr('stroke-width',2.5).attr('opacity',0);
+
+  /* interpolated dashed overlay - separate path for non-confirmed segments */
+  /* Build dashed dash segments: pairs of confirmed points have dashed in between */
+  var confirmedYrs = [2002,2010,2015,2016,2018,2019,2020,2021,2023,2025];
+
+  function buildSegments(data, confirmedSet) {
+    var segs = [];
+    for (var i=0; i<confirmedSet.length-1; i++) {
+      var y0 = confirmedSet[i], y1 = confirmedSet[i+1];
+      if (y1 - y0 > 1) {
+        /* interpolated segment between y0 and y1 */
+        var seg = data.filter(function(d){ return d.yr >= y0 && d.yr <= y1; });
+        segs.push(seg);
+      }
+    }
+    return segs;
+  }
+
+  var twSegs = buildSegments(twData, confirmedYrs);
+  var fwSegs = buildSegments(fwData, confirmedYrs);
+
+  var twDashG = clipG.append('g').attr('class','tw-dash').attr('opacity',0);
+  var fwDashG = clipG.append('g').attr('class','fw-dash').attr('opacity',0);
+
+  twSegs.forEach(function(seg){
+    twDashG.append('path').datum(seg).attr('d', lineGen)
+      .attr('fill','none').attr('stroke','#4a8fd4').attr('stroke-width',1.5)
+      .attr('stroke-dasharray','4,4').attr('opacity',0.45);
+  });
+  fwSegs.forEach(function(seg){
+    fwDashG.append('path').datum(seg).attr('d', lineGen)
+      .attr('fill','none').attr('stroke','#e8522a').attr('stroke-width',1.5)
+      .attr('stroke-dasharray','4,4').attr('opacity',0.45);
+  });
+
+  /* ── CONFIRMED DOTS ── */
+  var dotsG = g.append('g').attr('class','dots');
+  confirmedYrs.forEach(function(yr){
+    var i = yr - 2002;
+    dotsG.append('circle').attr('class','dot-tw')
+      .attr('cx',xSc(yr)).attr('cy',ySc(TW[i])).attr('r',3.5)
+      .attr('fill','#4a8fd4').attr('opacity',0);
+    dotsG.append('circle').attr('class','dot-fw')
+      .attr('cx',xSc(yr)).attr('cy',ySc(FW[i])).attr('r',3.5)
+      .attr('fill','#e8522a').attr('opacity',0);
+  });
+
+  /* ── STEP-0 HERO DOT ── */
+  var heroDotG = g.append('g').attr('class','hero-dot');
+
+  /* pulsing rings */
+  function addPulseRing(delay) {
+    var ring = heroDotG.append('circle')
+      .attr('cx',xSc(2002)).attr('cy',ySc(1.68))
+      .attr('r',5).attr('fill','none')
+      .attr('stroke','#4a8fd4').attr('stroke-width',1.5).attr('opacity',0.9);
+
+    function pulse() {
+      ring.attr('r',5).attr('opacity',0.8)
+        .transition().duration(2000).ease(d3.easeQuadOut)
+        .attr('r',26).attr('opacity',0)
+        .on('end', pulse);
+    }
+    setTimeout(pulse, delay);
+  }
+  addPulseRing(0);
+  addPulseRing(700);
+
+  heroDotG.append('circle')
+    .attr('cx',xSc(2002)).attr('cy',ySc(1.68))
+    .attr('r',5).attr('fill','#4a8fd4');
+
+  /* label */
+  var heroDotLabel = heroDotG.append('g').attr('transform','translate('+(xSc(2002)+14)+','+(ySc(1.68)-2)+')');
+  heroDotLabel.append('text')
+    .attr('fill','#e8e0cc').attr('font-size',12).attr('font-family','IBM Plex Mono,monospace')
+    .attr('font-weight','500').attr('dy','0em').text('1.68M');
+  heroDotLabel.append('text')
+    .attr('fill','#54504a').attr('font-size',9).attr('font-family','IBM Plex Mono,monospace')
+    .attr('dy','1.3em').text('total, 2002');
+
+  /* ── MINI DONUT for step 2 ── */
+  var pieX = cW - 44, pieY = 52;
+  var pieG = g.append('g').attr('transform','translate('+pieX+','+pieY+')').attr('opacity',0);
+
+  var pieLayout = d3.pie().sort(null).value(function(d){ return d.v; });
+  var arcGen = d3.arc().innerRadius(20).outerRadius(36);
+  var pieSlices = [{v:67,c:'#4a8fd4'},{v:33,c:'#e8522a'}];
+
+  pieG.selectAll('path').data(pieLayout(pieSlices)).enter().append('path')
+    .attr('d', arcGen).attr('fill', function(d){ return d.data.c; })
+    .attr('stroke','#0f0f0c').attr('stroke-width',1.5);
+
+  pieG.append('text').attr('text-anchor','middle').attr('dy','0.35em')
+    .attr('fill','#e8e0cc').attr('font-size',11).attr('font-family','IBM Plex Mono,monospace')
+    .attr('font-weight','500').text('67%');
+
+  pieG.append('text').attr('text-anchor','middle').attr('y',52)
+    .attr('fill','#4a8fd4').attr('font-size',9).attr('font-family','IBM Plex Mono,monospace')
+    .text('two-wheelers');
+
+  /* ── FINAL ANNOTATION for step 5 ── */
+  var annotG = g.append('g').attr('class','annot').attr('opacity',0);
+  var annX = xSc(2025), annTWY = ySc(8.21), annFWY = ySc(4.09);
+
+  annotG.append('line')
+    .attr('x1',annX+4).attr('x2',annX+18)
+    .attr('y1',annTWY).attr('y2',annTWY - 18)
+    .attr('stroke','rgba(74,143,212,0.5)').attr('stroke-width',1);
+  annotG.append('text').attr('x',annX+20).attr('y',annTWY-20)
+    .attr('fill','rgba(74,143,212,0.85)').attr('font-size',10)
+    .attr('font-family','IBM Plex Mono,monospace').text('8.21M');
+
+  annotG.append('line')
+    .attr('x1',annX+4).attr('x2',annX+18)
+    .attr('y1',annFWY).attr('y2',annFWY + 18)
+    .attr('stroke','rgba(232,82,42,0.5)').attr('stroke-width',1);
+  annotG.append('text').attr('x',annX+20).attr('y',annFWY+22)
+    .attr('fill','rgba(232,82,42,0.85)').attr('font-size',10)
+    .attr('font-family','IBM Plex Mono,monospace').text('4.09M');
+
+  /* Total label */
+  annotG.append('text').attr('x',annX-8).attr('y',ySc(12.3)-10)
+    .attr('text-anchor','end').attr('fill','rgba(255,255,255,0.5)')
+    .attr('font-size',9).attr('font-family','IBM Plex Mono,monospace').text('12.3M total');
+
+  /* ── CROSSHAIR TOOLTIP ── */
+  var ttG = g.append('g').attr('class','tt').attr('opacity',0).attr('pointer-events','none');
+  var ttVline = ttG.append('line').attr('y1',0).attr('y2',cH)
+    .attr('stroke','rgba(255,255,255,0.12)').attr('stroke-width',1);
+  var ttDotTW = ttG.append('circle').attr('r',4.5)
+    .attr('fill','#4a8fd4').attr('stroke','#0f0f0c').attr('stroke-width',1.5);
+  var ttDotFW = ttG.append('circle').attr('r',4.5)
+    .attr('fill','#e8522a').attr('stroke','#0f0f0c').attr('stroke-width',1.5);
+  var ttBox = ttG.append('g');
+  var ttBg = ttBox.append('rect').attr('rx',4)
+    .attr('fill','#1a1915').attr('stroke','rgba(255,255,255,0.09)').attr('stroke-width',1);
+  var ttYr = ttBox.append('text').attr('font-family','IBM Plex Mono,monospace').attr('fill','#e8e0cc').attr('font-size',11).attr('font-weight','500');
+  var ttTW = ttBox.append('text').attr('font-family','IBM Plex Mono,monospace').attr('fill','#4a8fd4').attr('font-size',10);
+  var ttFW = ttBox.append('text').attr('font-family','IBM Plex Mono,monospace').attr('fill','#e8522a').attr('font-size',10);
+  var ttTotal = ttBox.append('text').attr('font-family','IBM Plex Mono,monospace').attr('fill','#54504a').attr('font-size',10);
+
+  /* mouse overlay */
+  var currentStep = 0;
+
+  g.append('rect').attr('width',cW).attr('height',cH)
+    .attr('fill','transparent').attr('cursor','crosshair')
+    .attr('pointer-events','all')
+    .on('mousemove', function(event) {
+      if (currentStep === 0) return;
+      var mx = d3.pointer(event)[0];
+      var yr = Math.round(xSc.invert(mx));
+      yr = Math.max(2002, Math.min(2025, yr));
+      var idx = yr - 2002;
+      var twV = TW[idx], fwV = FW[idx];
+      var cx = xSc(yr);
+
+      ttG.attr('opacity',1);
+      ttVline.attr('x1',cx).attr('x2',cx);
+      ttDotTW.attr('cx',cx).attr('cy',ySc(twV));
+      ttDotFW.attr('cx',cx).attr('cy',ySc(fwV));
+
+      var bx = cx + 12;
+      if (bx + 128 > cW) bx = cx - 140;
+      var by = Math.max(4, ySc(twV) - 68);
+
+      ttYr.attr('x', bx+10).attr('y', by+17).text(yr.toString());
+      ttTW.attr('x', bx+10).attr('y', by+32).text('2W: '+twV.toFixed(2)+'M'+(CONFIRMED[yr]?'':' est.'));
+      ttFW.attr('x', bx+10).attr('y', by+46).text('4W+: '+fwV.toFixed(2)+'M'+(CONFIRMED[yr]?'':' est.'));
+      ttTotal.attr('x', bx+10).attr('y', by+60).text('Total: '+(twV+fwV).toFixed(2)+'M');
+      ttBg.attr('x',bx).attr('y',by).attr('width',128).attr('height',68);
+    })
+    .on('mouseleave', function() { ttG.attr('opacity',0); });
+
+  /* ── STEP LOGIC ── */
+  var FOOT = [
+    '2002 \u00b7 1.68M total \u00b7 hover chart to explore',
+    'Growth at ~9.5% annually for 23 consecutive years',
+    'Two-wheelers: 67% of all vehicles \u00b7 donut shows 2025 composition',
+    '2015\u20132020: the surge \u00b7 +3.8M vehicles in 5 years',
+    '25.37 lakh cars \u00b7 Bengaluru > 50% of all Karnataka cars',
+    '12.3M total \u00b7 8.21M two-wheelers \u00b7 4.09M cars & others'
+  ];
+
+  var lineRevealed = false;
+
+  function applyStep(si) {
+    currentStep = si;
+    var t = d3.transition().duration(650).ease(d3.easeQuadInOut);
+
+    if (si === 0) {
+      lineRevealed = false;
+      clipRect.attr('width', 0);
+      heroDotG.transition(t).attr('opacity',1);
+      twAreaPath.transition(t).attr('opacity',0);
+      fwAreaPath.transition(t).attr('opacity',0);
+      twLinePath.transition(t).attr('opacity',0);
+      fwLinePath.transition(t).attr('opacity',0);
+      twDashG.transition(t).attr('opacity',0);
+      fwDashG.transition(t).attr('opacity',0);
+      dotsG.selectAll('.dot-tw,.dot-fw').transition(t).attr('opacity',0);
+      surgeG.transition(t).attr('opacity',0);
+      pieG.transition(t).attr('opacity',0);
+      annotG.transition(t).attr('opacity',0);
+    } else {
+      /* reveal lines once */
+      if (!lineRevealed) {
+        lineRevealed = true;
+        clipRect.transition().duration(1100).ease(d3.easeQuadInOut).attr('width', cW + 4);
+      }
+      heroDotG.transition(t).attr('opacity',0);
+
+      var opTW = (si === 4) ? 0.08 : 1;
+      var opFW = (si === 2) ? 0.07 : 1;
+
+      twAreaPath.transition(t).attr('opacity', opTW);
+      fwAreaPath.transition(t).attr('opacity', opFW);
+      twLinePath.transition(t).attr('opacity', opTW);
+      fwLinePath.transition(t).attr('opacity', opFW);
+      twDashG.transition(t).attr('opacity', opTW);
+      fwDashG.transition(t).attr('opacity', opFW);
+      dotsG.selectAll('.dot-tw').transition(t).attr('opacity', opTW);
+      dotsG.selectAll('.dot-fw').transition(t).attr('opacity', opFW);
+
+      surgeG.transition(t).attr('opacity', si === 3 ? 1 : 0);
+      pieG.transition(t).attr('opacity', si === 2 ? 1 : 0);
+      annotG.transition(t).attr('opacity', si === 5 ? 1 : 0);
+    }
+
+    document.getElementById('leg2w').style.opacity = (si === 4) ? '0.2' : '1';
+    document.getElementById('leg4w').style.opacity = (si === 2) ? '0.2' : '1';
+    document.getElementById('foot').textContent = FOOT[si];
+  }
+
+  /* ── INTERSECTION OBSERVER ──
+     rootMargin '-38% 0px -38% 0px' means a step fires when its
+     center crosses the middle 24% band of the viewport — works
+     reliably on both desktop (side-by-side) and mobile (stacked). */
+  var stepEls = document.querySelectorAll('.step');
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        stepEls.forEach(function(el){ el.classList.remove('active'); });
+        entry.target.classList.add('active');
+        applyStep(parseInt(entry.target.dataset.step, 10));
+      }
+    });
+  }, { rootMargin: '-38% 0px -38% 0px', threshold: 0 });
+
+  stepEls.forEach(function(el){ io.observe(el); });
+
+  applyStep(0);
+})();
+</script>
+</body>
+</html>
