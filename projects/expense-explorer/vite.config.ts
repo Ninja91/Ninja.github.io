@@ -6,4 +6,16 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss()],
   base: command === 'build' ? '/projects/expense-explorer/' : '/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('recharts')) return 'charts';
+          if (id.includes('lucide-react')) return 'icons';
+          return 'vendor';
+        },
+      },
+    },
+  },
 }))

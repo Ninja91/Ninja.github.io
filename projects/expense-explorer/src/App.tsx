@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TabsContent } from './components/ui/Tabs';
 import { Dashboard } from './components/Dashboard';
 import { Chat } from './components/Chat';
@@ -6,132 +6,192 @@ import { Settings } from './components/Settings';
 import { Button } from './components/ui/Button';
 import { FileUpload } from './components/FileUpload';
 import { runRemoteApp, pollRequest } from './api/client';
-import { LayoutDashboard, MessageSquare, Settings as SettingsIcon, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Settings as SettingsIcon, RefreshCw, ShieldCheck, Sparkles, type LucideIcon } from 'lucide-react';
 import { Badge } from './components/ui/Badge';
 import { cn } from './lib/utils';
 
+type AppTab = 'dashboard' | 'chat' | 'settings';
+
+interface Message {
+  id: string;
+  role: 'agent' | 'user';
+  text: string;
+}
+
+interface DemoInsights {
+  category_summary: Record<string, number>;
+  subscriptions: Array<{ description: string; amount: number; provider: string; occurrences: number }>;
+  anomalies: Array<{ description: string; amount: number; date: string; merchant: string; severity: string }>;
+  trends: { monthly: Array<{ month: string; amount: number }> };
+}
+
+interface MobileTabConfig {
+  id: AppTab;
+  icon: LucideIcon;
+  label: string;
+}
+
+const WELCOME_MESSAGE = "Hello! Welcome to Expense Explorer. Start by connecting your keys in Settings or load demo data to see how I analyze your finances.";
+const MOBILE_TABS: MobileTabConfig[] = [
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Insights' },
+  { id: 'chat', icon: MessageSquare, label: 'Assistant' },
+  { id: 'settings', icon: SettingsIcon, label: 'Setup' }
+];
+
+const DEMO_INSIGHTS: DemoInsights = {
+  category_summary: { "Food \u0026 Dining": 450.20, "Fixed Rent": 1200.00, "Online Subs": 89.90, "Travel \u0026 Work": 320.15 },
+  subscriptions: [
+    { description: "Netflix Premium", amount: 15.99, provider: "Apple Card", occurrences: 12 },
+    { description: "Adobe CC", amount: 52.99, provider: "Amex Platinum", occurrences: 6 }
+  ],
+  anomalies: [
+    { description: "Suspected Duplicate Charge", amount: 150.00, date: "2025-01-20", merchant: "Fancy Bistro", severity: "high" }
+  ],
+  trends: {
+    monthly: [
+      { month: "Oct", amount: 2100 },
+      { month: "Nov", amount: 1950 },
+      { month: "Dec", amount: 2400 },
+      { month: "Jan", amount: 1800 }
+    ]
+  }
+};
+
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [messages, setMessages] = useState<{ role: 'agent' | 'user', text: string }[]>([]);
-  const [insights, setInsights] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [insights, setInsights] = useState<DemoInsights | Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
   const [hasKeys, setHasKeys] = useState(!!sessionStorage.getItem('TENSORLAKE_API_KEY'));
+  const messageCounterRef = useRef(0);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener('resize', handleResize);
+  const createMessage = useCallback((role: Message['role'], text: string): Message => ({
+    id: `msg-${++messageCounterRef.current}`,
+    role,
+    text
+  }), []);
 
-    // Initial load check
-    const checkProxy = async () => {
-      try {
-        const resp = await fetch('http://localhost:8888/');
-        if (resp.ok) console.log("[PROXY] Local proxy detected at port 8888");
+  const appendMessage = useCallback((role: Message['role'], text: string) => {
+    setMessages((prev) => [...prev, createMessage(role, text)]);
+  }, [createMessage]);
 
-        // Try to fetch local config if keys are missing
-        if (!sessionStorage.getItem('TENSORLAKE_API_KEY')) {
-          const configResp = await fetch('http://localhost:8888/api/config');
-          if (configResp.ok) {
-            const config = await configResp.json();
-            if (config.TENSORLAKE_API_KEY) sessionStorage.setItem('TENSORLAKE_API_KEY', config.TENSORLAKE_API_KEY);
-            if (config.GEMINI_API_KEY) sessionStorage.setItem('GEMINI_API_KEY', config.GEMINI_API_KEY);
-            if (config.DATABASE_URL) sessionStorage.setItem('DATABASE_URL', config.DATABASE_URL);
-
-            if (config.TENSORLAKE_API_KEY) {
-              console.log("[PROXY] Pre-filled keys from local .env");
-              setHasKeys(true);
-              refreshInsights(false);
-            }
-          }
-        }
-      } catch (e) { }
-    };
-    checkProxy();
-
-    if (hasKeys) {
-      refreshInsights(false);
-    } else if (messages.length === 0) {
-      setMessages([{ role: 'agent', text: "Hello! Welcome to Expense Explorer. Start by connecting your keys in Settings or load demo data to see how I analyze your finances." }]);
-    }
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const refreshInsights = async (force = true) => {
-    setIsLoading(true);
+  const refreshInsights = useCallback(async (force = true, options: { trackLoading?: boolean } = {}) => {
+    const shouldTrackLoading = options.trackLoading ?? true;
+    if (shouldTrackLoading) setIsLoading(true);
     try {
       const { request_id } = await runRemoteApp('insights_app', { force_refresh: force });
       const data = await pollRequest(request_id, 'insights_app');
-      setInsights(data);
+      setInsights(data as DemoInsights | Record<string, unknown>);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false);
+      if (shouldTrackLoading) setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleFileUpload = async (filename: string, base64: string, contentType: string) => {
+  const checkProxy = useCallback(async () => {
+    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalHost) return;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 1_500);
+    try {
+      const resp = await fetch('http://localhost:8888/', { signal: controller.signal });
+      if (!resp.ok || sessionStorage.getItem('TENSORLAKE_API_KEY')) return;
+
+      const configResp = await fetch('http://localhost:8888/api/config', { signal: controller.signal });
+      if (!configResp.ok) return;
+      const config = await configResp.json() as Record<string, string>;
+
+      if (config.TENSORLAKE_API_KEY) sessionStorage.setItem('TENSORLAKE_API_KEY', config.TENSORLAKE_API_KEY);
+      if (config.GEMINI_API_KEY) sessionStorage.setItem('GEMINI_API_KEY', config.GEMINI_API_KEY);
+      if (config.DATABASE_URL) sessionStorage.setItem('DATABASE_URL', config.DATABASE_URL);
+
+      if (config.TENSORLAKE_API_KEY) {
+        setHasKeys(true);
+      }
+    } catch (_error) {
+      // Ignore proxy detection errors; hosted mode still works.
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }, [refreshInsights]);
+
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+    const handleResize = () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      animationFrameId = window.requestAnimationFrame(() => {
+        setIsMobile(window.innerWidth < 1024);
+      });
+    };
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    void checkProxy();
+    if (hasKeys) {
+      void refreshInsights(false);
+      return;
+    }
+    setMessages([createMessage('agent', WELCOME_MESSAGE)]);
+  }, [checkProxy, createMessage, hasKeys, refreshInsights]);
+
+  const handleFileUpload = useCallback(async (filename: string, base64: string, contentType: string) => {
     setIsLoading(true);
-    setMessages(prev => [...prev, { role: 'user', text: `Uploaded statement: ${filename}. Processing...` }]);
+    appendMessage('user', `Uploaded statement: ${filename}. Processing...`);
     try {
       const { request_id } = await runRemoteApp('expense_ingestion_app', {
         file_b64: base64,
         content_type: contentType,
-        filename: filename
+        filename
       });
       await pollRequest(request_id, 'expense_ingestion_app');
-      setMessages(prev => [...prev, { role: 'agent', text: `Successfully ingested ${filename}! Refreshing insights...` }]);
-      await refreshInsights(true);
+      appendMessage('agent', `Successfully ingested ${filename}! Refreshing insights...`);
+      await refreshInsights(true, { trackLoading: false });
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'agent', text: `Ingestion failed: ${error instanceof Error ? error.message : "Internal Error"}. Check Settings.` }]);
+      appendMessage('agent', `Ingestion failed: ${error instanceof Error ? error.message : "Internal Error"}. Check Settings.`);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [appendMessage, refreshInsights]);
 
-  const loadDemo = () => {
-    const sampleInsights = {
-      category_summary: { "Food \u0026 Dining": 450.20, "Fixed Rent": 1200.00, "Online Subs": 89.90, "Travel \u0026 Work": 320.15 },
-      subscriptions: [
-        { description: "Netflix Premium", amount: 15.99, provider: "Apple Card", occurrences: 12 },
-        { description: "Adobe CC", amount: 52.99, provider: "Amex Platinum", occurrences: 6 }
-      ],
-      anomalies: [
-        { description: "Suspected Duplicate Charge", amount: 150.00, date: "2025-01-20", merchant: "Fancy Bistro", severity: "high" }
-      ],
-      trends: {
-        monthly: [
-          { month: "Oct", amount: 2100 },
-          { month: "Nov", amount: 1950 },
-          { month: "Dec", amount: 2400 },
-          { month: "Jan", amount: 1800 }
-        ]
-      }
-    };
-    setInsights(sampleInsights);
-    setMessages(prev => [...prev, { role: 'agent', text: "Demo Mode is active. I've populated the dashboard with sample financial intelligence." }]);
+  const loadDemo = useCallback(() => {
+    setInsights(DEMO_INSIGHTS);
+    appendMessage('agent', "Demo Mode is active. I've populated the dashboard with sample financial intelligence.");
     setActiveTab('dashboard');
-  };
+  }, [appendMessage]);
 
-  const handleSendMessage = async (text: string) => {
-    setMessages(prev => [...prev, { role: 'user', text }]);
+  const handleSendMessage = useCallback(async (text: string) => {
+    appendMessage('user', text);
     setIsLoading(true);
     try {
       const { request_id } = await runRemoteApp('query_app', { user_query: text });
       const answer = await pollRequest(request_id, 'query_app');
-      setMessages(prev => [...prev, { role: 'agent', text: answer }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'agent', text: "I'm having trouble connecting. Please verify your keys in Settings." }]);
+      appendMessage('agent', String(answer));
+    } catch (_error) {
+      appendMessage('agent', "I'm having trouble connecting. Please verify your keys in Settings.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [appendMessage]);
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = useCallback(() => {
     setHasKeys(true);
     setActiveTab('dashboard');
-    refreshInsights(false);
-  };
+    void refreshInsights(false);
+  }, [refreshInsights]);
+
+  const navTabs = useMemo(() => MOBILE_TABS, []);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] flex flex-col antialiased selection:bg-blue-100/50">
@@ -156,7 +216,7 @@ function App() {
               Try Demo
             </Button>
           )}
-          <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 text-slate-400 hover:text-black hover:bg-black/5" onClick={() => refreshInsights(true)} disabled={isLoading}>
+          <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 text-slate-400 hover:text-black hover:bg-black/5" onClick={() => void refreshInsights(true)} disabled={isLoading}>
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           </Button>
         </div>
@@ -182,11 +242,7 @@ function App() {
 
             {/* Apple Style Bottom Nav */}
             <nav className="glass apple-border fixed bottom-6 left-6 right-6 h-16 rounded-[24px] shadow-2xl flex justify-around items-center px-4 z-50">
-              {[
-                { id: 'dashboard', icon: LayoutDashboard, label: 'Insights' },
-                { id: 'chat', icon: MessageSquare, label: 'Assistant' },
-                { id: 'settings', icon: SettingsIcon, label: 'Setup' }
-              ].map((tab) => (
+              {navTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}

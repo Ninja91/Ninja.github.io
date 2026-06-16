@@ -1,10 +1,44 @@
+import { useMemo } from 'react';
 import { Card, CardTitle } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, AlertCircle, Calendar, CreditCard, PieChart, CheckCircle2 } from 'lucide-react';
 
+const COLORS = ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#ff2d55'];
+
+interface CategoryEntry {
+    name: string;
+    value: number;
+}
+
+interface TrendEntry {
+    month: string;
+    amount: number;
+}
+
+interface AnomalyEntry {
+    description: string;
+    amount: number | string;
+    date?: string;
+}
+
+interface SubscriptionEntry {
+    description: string;
+    amount: number | string;
+    provider?: string;
+}
+
+interface Insights {
+    category_summary?: Record<string, number | string>;
+    trends?: {
+        monthly?: Array<{ month: string; amount: number | string }>;
+    };
+    anomalies?: AnomalyEntry[];
+    subscriptions?: SubscriptionEntry[];
+}
+
 interface DashboardProps {
-    insights: any;
+    insights: Insights | null;
 }
 
 export function Dashboard({ insights }: DashboardProps) {
@@ -18,17 +52,27 @@ export function Dashboard({ insights }: DashboardProps) {
         );
     }
 
-    const categoryData = Object.entries(insights.category_summary || {}).map(([name, value]) => ({
-        name,
-        value: Number(value)
-    }));
+    const trendData = useMemo<TrendEntry[]>(
+        () =>
+            (insights.trends?.monthly || []).map((item) => ({
+                month: item.month,
+                amount: Number(item.amount)
+            })),
+        [insights.trends?.monthly]
+    );
 
-    const trendData = (insights.trends?.monthly || []).map((item: any) => ({
-        month: item.month,
-        amount: Number(item.amount)
-    }));
-
-    const COLORS = ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#ff2d55'];
+    const { categoryData, maxCategoryValue } = useMemo(() => {
+        const entries: CategoryEntry[] = Object.entries(insights.category_summary || {}).map(([name, value]) => ({
+            name,
+            value: Number(value)
+        }));
+        entries.sort((a, b) => b.value - a.value);
+        const maxValue = entries.reduce((max, item) => Math.max(max, item.value), 0);
+        return {
+            categoryData: entries,
+            maxCategoryValue: maxValue || 1
+        };
+    }, [insights.category_summary]);
 
     return (
         <div className="space-y-10 pb-20">
@@ -70,13 +114,13 @@ export function Dashboard({ insights }: DashboardProps) {
                     </div>
                     <CardTitle className="text-[17px] mb-4">Risk Detection</CardTitle>
                     <div className="space-y-3 overflow-y-auto pr-1">
-                        {(insights.anomalies || []).map((a: any, idx: number) => (
-                            <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        {(insights.anomalies || []).map((a, idx) => (
+                            <div key={`${a.description}-${a.date || idx}`} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
                                 <AlertCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
                                 <div>
                                     <div className="text-[13px] font-bold text-slate-900 leading-tight">{a.description}</div>
                                     <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-1">
-                                        <Calendar size={10} /> {a.date} • ${a.amount}
+                                        <Calendar size={10} /> {a.date || 'N/A'} • ${a.amount}
                                     </div>
                                 </div>
                             </div>
@@ -98,8 +142,8 @@ export function Dashboard({ insights }: DashboardProps) {
                 </div>
                 <Card className="apple-card p-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 p-2">
-                        {categoryData.sort((a, b) => b.value - a.value).map((cat, idx) => (
-                            <div key={idx} className="space-y-2">
+                        {categoryData.map((cat, idx) => (
+                            <div key={cat.name} className="space-y-2">
                                 <div className="flex justify-between items-end">
                                     <span className="text-sm font-bold text-slate-900">{cat.name}</span>
                                     <span className="text-[15px] font-bold text-black">${cat.value.toFixed(2)}</span>
@@ -108,7 +152,7 @@ export function Dashboard({ insights }: DashboardProps) {
                                     <div
                                         className="h-full rounded-full transition-all duration-1000"
                                         style={{
-                                            width: `${(cat.value / (Math.max(...categoryData.map(c => c.value)) || 1)) * 100}%`,
+                                            width: `${(cat.value / maxCategoryValue) * 100}%`,
                                             backgroundColor: COLORS[idx % COLORS.length]
                                         }}
                                     />
@@ -125,8 +169,8 @@ export function Dashboard({ insights }: DashboardProps) {
                     <h4 className="text-[13px] font-bold text-slate-400 uppercase tracking-widest">Recurring Obligations</h4>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(insights.subscriptions || []).map((s: any, idx: number) => (
-                        <Card key={idx} className="apple-card p-4 flex justify-between items-center group hover:scale-[1.02] transition-transform cursor-default">
+                    {(insights.subscriptions || []).map((s, idx) => (
+                        <Card key={`${s.description}-${idx}`} className="apple-card p-4 flex justify-between items-center group hover:scale-[1.02] transition-transform cursor-default">
                             <div className="flex gap-3 items-center">
                                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
                                     <CreditCard size={18} />

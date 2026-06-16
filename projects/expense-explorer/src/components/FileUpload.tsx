@@ -57,15 +57,15 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
         if (!file) return;
 
         try {
-            const reader = new FileReader();
-            reader.onload = async () => {
-                const base64 = (reader.result as string).split(',')[1];
-                await onUpload(file.name, base64, file.type);
-                setFile(null);
-            };
-            reader.readAsDataURL(file);
+            const base64 = await toBase64(file);
+            await onUpload(file.name, base64, file.type);
+            setFile(null);
+            setError(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         } catch (err) {
-            setError("Failed to read file.");
+            setError(err instanceof Error ? err.message : "Failed to read file.");
         }
     };
 
@@ -100,7 +100,13 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
                             <p className="text-[10px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
                         <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setFile(null)} className="rounded-full">
+                            <Button size="sm" variant="outline" onClick={() => {
+                                setFile(null);
+                                setError(null);
+                                if (fileInputRef.current) {
+                                    fileInputRef.current.value = '';
+                                }
+                            }} className="rounded-full">
                                 <X size={14} className="mr-1" /> Remove
                             </Button>
                             <Button size="sm" onClick={handleSubmit} className="rounded-full bg-blue-600 hover:bg-blue-700">
@@ -130,3 +136,22 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
         </div>
     );
 }
+    const toBase64 = (selectedFile: File) =>
+        new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result;
+                if (typeof result !== 'string') {
+                    reject(new Error('Failed to parse file'));
+                    return;
+                }
+                const parts = result.split(',');
+                if (parts.length < 2) {
+                    reject(new Error('Invalid file encoding'));
+                    return;
+                }
+                resolve(parts[1]);
+            };
+            reader.onerror = () => reject(new Error('Failed to read file.'));
+            reader.readAsDataURL(selectedFile);
+        });
